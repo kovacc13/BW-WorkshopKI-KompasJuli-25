@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dein KI-Kompass Workshop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .task-item {
+            cursor: grab;
+            transition: background-color 0.2s;
+        }
+        .task-item:active {
+            cursor: grabbing;
+        }
+        .drop-zone {
+            transition: background-color 0.2s, border-color 0.2s;
+        }
+        .drag-over {
+            background-color: #e0f2fe; /* light blue */
+            border-color: #38bdf8; /* sky blue */
+        }
+        .step-content {
+            display: none;
+        }
+        .step-content.active {
+            display: block;
+        }
+        .task-in-matrix {
+            transform: scale(0.9);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">Dein KI-Kompass Workshop</h1>
+            <p class="mt-2 text-lg text-slate-600">Finde heraus, wo KI dich im Job unterstützen kann.</p>
+        </header>
+
+        <!-- Step Indicator -->
+        <div class="flex justify-center items-center mb-8 space-x-2 md:space-x-4">
+            <div id="step-indicator-1" class="step-indicator flex items-center text-sky-600">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold">1</div>
+                <span class="hidden md:block ml-2 font-semibold">Einstieg</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-slate-300"></div>
+            <div id="step-indicator-2" class="step-indicator flex items-center text-slate-400">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-300 flex items-center justify-center font-bold">2</div>
+                <span class="hidden md:block ml-2 font-semibold">Inventur</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-slate-300"></div>
+            <div id="step-indicator-3" class="step-indicator flex items-center text-slate-400">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-300 flex items-center justify-center font-bold">3</div>
+                <span class="hidden md:block ml-2 font-semibold">Matrix</span>
+            </div>
+            <div class="flex-1 h-0.5 bg-slate-300"></div>
+            <div id="step-indicator-4" class="step-indicator flex items-center text-slate-400">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-300 flex items-center justify-center font-bold">4</div>
+                <span class="hidden md:block ml-2 font-semibold">Szenario</span>
+            </div>
+             <div class="flex-1 h-0.5 bg-slate-300"></div>
+            <div id="step-indicator-5" class="step-indicator flex items-center text-slate-400">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-slate-300 flex items-center justify-center font-bold">5</div>
+                <span class="hidden md:block ml-2 font-semibold">Abschluss</span>
+            </div>
+        </div>
+
+        <main class="bg-white p-6 md:p-8 rounded-2xl shadow-lg">
+            <!-- Step 1: Einstieg -->
+            <div id="step-1" class="step-content active">
+                <h2 class="text-2xl font-bold mb-4">Schritt 1: Die zwei Rollen der KI</h2>
+                <p class="mb-6 text-slate-600">Lass uns zuerst ein gemeinsames Verständnis schaffen. KI kann im Job zwei Hauptrollen einnehmen:</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-slate-100 p-6 rounded-xl">
+                        <h3 class="text-xl font-semibold mb-2">KI als "Autopilot" (Routine)</h3>
+                        <p class="mb-2">Die KI übernimmt eine Aufgabe vollständig und führt sie selbstständig aus. Du kontrollierst nur noch das Ergebnis.</p>
+                        <p class="font-semibold">Ziel: Effizienz steigern, Zeit sparen.</p>
+                        <p class="mt-2 text-sm text-slate-500"><strong>Analogie:</strong> Der Tempomat im Auto.</p>
+                    </div>
+                    <div class="bg-slate-100 p-6 rounded-xl">
+                        <h3 class="text-xl font-semibold mb-2">KI als "Navigator" (Entscheidungshilfe)</h3>
+                        <p class="mb-2">Die KI analysiert Daten, zeigt Muster, macht Vorschläge. Du triffst die endgültige, informierte Entscheidung.</p>
+                        <p class="font-semibold">Ziel: Bessere, datengestützte Entscheidungen.</p>
+                        <p class="mt-2 text-sm text-slate-500"><strong>Analogie:</strong> Das Navi, das dir Routen vorschlägt.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 2: Aufgaben-Inventur -->
+            <div id="step-2" class="step-content">
+                <h2 class="text-2xl font-bold mb-2">Schritt 2: Deine Aufgaben-Inventur</h2>
+                <p class="mb-4 text-slate-600">Denke an eine typische Arbeitswoche. Welche Aufgaben fallen bei dir regelmäßig an? Trage sie hier ein.</p>
+                <div class="flex gap-2 mb-6">
+                    <input type="text" id="task-input" class="flex-grow p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500" placeholder="z.B. Wöchentlichen Report erstellen">
+                    <button id="add-task-btn" class="bg-sky-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-sky-700 transition-colors">Hinzufügen</button>
+                </div>
+                <p class="mb-4 text-slate-600">Sortiere deine Aufgaben nun zu. Was ist Routine, was eine Entscheidung?</p>
+                <div class="grid md:grid-cols-2 gap-6 min-h-[300px]">
+                    <div id="routine-col" class="bg-slate-100 p-4 rounded-xl drop-zone">
+                        <h3 class="text-lg font-semibold text-center mb-4">ROUTINE (Autopilot)</h3>
+                        <div id="routine-tasks" class="space-y-2"></div>
+                    </div>
+                    <div id="decision-col" class="bg-slate-100 p-4 rounded-xl drop-zone">
+                        <h3 class="text-lg font-semibold text-center mb-4">ENTSCHEIDUNG (Navigator)</h3>
+                        <div id="decision-tasks" class="space-y-2"></div>
+                    </div>
+                </div>
+                 <div id="task-pool" class="mt-4 p-4 border-2 border-dashed rounded-lg min-h-[100px]">
+                    <p class="text-sm text-center text-slate-500">Neue Aufgaben erscheinen hier. Ordne sie den Spalten zu.</p>
+                </div>
+            </div>
+
+            <!-- Step 3: KI-Potenzial-Matrix -->
+            <div id="step-3" class="step-content">
+                <h2 class="text-2xl font-bold mb-2">Schritt 3: Die KI-Potenzial-Matrix</h2>
+                <p class="mb-4 text-slate-600">Priorisiere nun deine Aufgaben. Ziehe die Kärtchen per Drag & Drop in die Matrix. Wo liegt das größte Potenzial?</p>
+                <div class="flex flex-col lg:flex-row gap-6">
+                    <div id="matrix-task-list" class="lg:w-1/4 bg-slate-100 p-4 rounded-xl space-y-2">
+                         <h3 class="font-semibold text-center mb-2">Deine Aufgaben</h3>
+                         <!-- Tasks will be populated here -->
+                    </div>
+                    <div class="flex-1 grid grid-cols-2 grid-rows-2 gap-1 bg-slate-200 rounded-xl p-1 relative">
+                        <!-- Axis Labels -->
+                        <div class="absolute -bottom-8 left-0 right-0 text-center font-semibold text-slate-600">Zeitaufwand</div>
+                        <div class="absolute -left-24 top-0 bottom-0 flex items-center -rotate-90 font-semibold text-slate-600">Komplexität</div>
+                        
+                        <!-- Quadrants -->
+                        <div id="q1" class="drop-zone bg-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[200px] relative">
+                            <span class="absolute top-2 left-2 text-xs text-slate-400">Geringer Aufwand / Hohe Komplexität</span>
+                        </div>
+                        <div id="q2" class="drop-zone bg-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[200px] relative">
+                            <span class="absolute top-2 right-2 text-xs text-slate-400 font-bold">Navigator-Zone</span>
+                            <span class="absolute top-7 right-2 text-xs text-slate-400">Hoher Aufwand / Hohe Komplexität</span>
+                        </div>
+                        <div id="q3" class="drop-zone bg-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[200px] relative">
+                            <span class="absolute bottom-2 left-2 text-xs text-slate-400">Geringer Aufwand / Geringe Komplexität</span>
+                        </div>
+                        <div id="q4" class="drop-zone bg-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[200px] relative">
+                             <span class="absolute bottom-2 right-2 text-xs text-slate-400 font-bold">Autopilot-Zone</span>
+                             <span class="absolute bottom-7 right-2 text-xs text-slate-400">Hoher Aufwand / Geringe Komplexität</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4: Vom Heute zum Morgen -->
+            <div id="step-4" class="step-content">
+                 <h2 class="text-2xl font-bold mb-2">Schritt 4: Vom Heute zum Morgen</h2>
+                 <p class="mb-6 text-slate-600">Wähle eine vielversprechende Aufgabe aus der Matrix aus. Entwickle ein konkretes Szenario für den Wandel deiner Arbeit.</p>
+                 <div class="space-y-6">
+                    <div>
+                        <label for="szenario-heute" class="block text-lg font-semibold mb-2">HEUTE: Wie erledigst du diese Aufgabe jetzt?</label>
+                        <textarea id="szenario-heute" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500" placeholder="Welche Schritte sind nötig? Welche Tools nutzt du? Wo gibt es Frustration?"></textarea>
+                    </div>
+                     <div>
+                        <label for="szenario-morgen" class="block text-lg font-semibold mb-2">MORGEN mit KI: Wie könnte die Aufgabe mit KI-Unterstützung aussehen?</label>
+                        <textarea id="szenario-morgen" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500" placeholder="Was genau würde die KI tun? Welche Informationen würde sie liefern oder welche Aktion würde sie ausführen?"></textarea>
+                    </div>
+                     <div>
+                        <label for="szenario-rolle" class="block text-lg font-semibold mb-2">DEINE NEUE ROLLE: Was machst du dann?</label>
+                        <textarea id="szenario-rolle" rows="4" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500" placeholder="Welcher Teil der Aufgabe verbleibt bei dir? Welche neuen Freiräume oder höherwertigen Aufgaben entstehen dadurch?"></textarea>
+                    </div>
+                 </div>
+            </div>
+            
+            <!-- Step 5: Abschluss -->
+            <div id="step-5" class="step-content">
+                <h2 class="text-2xl font-bold mb-4">Schritt 5: Abschluss & Ernte</h2>
+                <p class="mb-6 text-slate-600">Super, du hast es fast geschafft! Nimm dir einen Moment, um die Ergebnisse zu reflektieren.</p>
+                <div class="bg-sky-50 border-l-4 border-sky-500 p-6 rounded-r-lg">
+                    <h3 class="text-xl font-semibold mb-4">Deine Reflexion</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="abschluss-erkenntnis" class="block font-semibold mb-1">Was war die größte Überraschung oder wichtigste Erkenntnis für dich heute?</label>
+                            <input type="text" id="abschluss-erkenntnis" class="w-full p-2 border border-slate-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label for="abschluss-schritt" class="block font-semibold mb-1">Was ist ein kleiner, konkreter Schritt, den du nächste Woche tun könntest?</label>
+                            <input type="text" id="abschluss-schritt" class="w-full p-2 border border-slate-300 rounded-lg" placeholder="z.B. ein KI-Tool recherchieren, mit einem Kollegen sprechen...">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Navigation -->
+        <footer class="mt-8 flex justify-between items-center">
+            <button id="prev-btn" class="bg-slate-300 text-slate-800 font-bold py-2 px-6 rounded-lg hover:bg-slate-400 transition-colors disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">Zurück</button>
+            <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors">Weiter</button>
+            <button id="finish-btn" class="bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-emerald-700 transition-colors hidden">Abschließen</button>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- STATE MANAGEMENT ---
+            let currentStep = 1;
+            const totalSteps = 5;
+            const tasks = [];
+            let draggedItem = null;
+
+            // --- DOM ELEMENTS ---
+            const stepContents = document.querySelectorAll('.step-content');
+            const stepIndicators = document.querySelectorAll('.step-indicator');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const finishBtn = document.getElementById('finish-btn');
+            const taskInput = document.getElementById('task-input');
+            const addTaskBtn = document.getElementById('add-task-btn');
+            const taskPool = document.getElementById('task-pool');
+            const routineCol = document.getElementById('routine-col');
+            const decisionCol = document.getElementById('decision-col');
+            const matrixTaskList = document.getElementById('matrix-task-list');
+            const dropZones = document.querySelectorAll('.drop-zone');
+
+
+            // --- FUNCTIONS ---
+            const updateUI = () => {
+                // Update Step Content
+                stepContents.forEach((step, index) => {
+                    step.classList.toggle('active', (index + 1) === currentStep);
+                });
+
+                // Update Step Indicator
+                stepIndicators.forEach((indicator, index) => {
+                    const circle = indicator.querySelector('div');
+                    const text = indicator.querySelector('span');
+                    if (index < currentStep) {
+                        indicator.classList.remove('text-slate-400');
+                        indicator.classList.add('text-sky-600');
+                        circle.classList.remove('bg-slate-300');
+                        circle.classList.add('bg-sky-600', 'text-white');
+                    } else {
+                        indicator.classList.remove('text-sky-600');
+                        indicator.classList.add('text-slate-400');
+                        circle.classList.remove('bg-sky-600', 'text-white');
+                        circle.classList.add('bg-slate-300');
+                    }
+                });
+
+                // Update Navigation Buttons
+                prevBtn.disabled = currentStep === 1;
+                nextBtn.classList.toggle('hidden', currentStep === totalSteps);
+                finishBtn.classList.toggle('hidden', currentStep !== totalSteps);
+                
+                if (currentStep === 3) {
+                    populateMatrixTaskList();
+                }
+            };
+
+            const createTaskElement = (task) => {
+                const taskEl = document.createElement('div');
+                taskEl.id = `task-${task.id}`;
+                taskEl.className = 'task-item bg-white p-3 rounded-lg shadow border flex justify-between items-center';
+                taskEl.draggable = true;
+                taskEl.innerHTML = `
+                    <span class="flex-grow">${task.text}</span>
+                    <div class="task-buttons ml-2 space-x-1">
+                        <button data-action="routine" class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded hover:bg-blue-300">Routine</button>
+                        <button data-action="decision" class="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded hover:bg-purple-300">Entscheidung</button>
+                    </div>
+                `;
+                
+                taskEl.addEventListener('dragstart', (e) => {
+                    draggedItem = e.target.closest('.task-item');
+                    setTimeout(() => {
+                        draggedItem.style.display = 'none';
+                    }, 0);
+                });
+
+                taskEl.addEventListener('dragend', () => {
+                    setTimeout(() => {
+                        if (draggedItem) {
+                           draggedItem.style.display = 'flex';
+                           draggedItem = null;
+                        }
+                    }, 0);
+                });
+                
+                taskEl.querySelector('.task-buttons').addEventListener('click', (e) => {
+                    if(e.target.tagName === 'BUTTON') {
+                        const action = e.target.dataset.action;
+                        const taskDiv = e.target.closest('.task-item');
+                        if (action === 'routine') {
+                            routineCol.querySelector('#routine-tasks').appendChild(taskDiv);
+                        } else if (action === 'decision') {
+                            decisionCol.querySelector('#decision-tasks').appendChild(taskDiv);
+                        }
+                        taskDiv.querySelector('.task-buttons').remove();
+                    }
+                });
+
+                return taskEl;
+            };
+            
+            const handleAddTask = () => {
+                const taskText = taskInput.value.trim();
+                if (taskText) {
+                    const newTask = {
+                        id: Date.now(),
+                        text: taskText
+                    };
+                    tasks.push(newTask);
+                    const taskElement = createTaskElement(newTask);
+                    taskPool.appendChild(taskElement);
+                    taskInput.value = '';
+                    taskInput.focus();
+                }
+            };
+            
+            const populateMatrixTaskList = () => {
+                matrixTaskList.innerHTML = '<h3 class="font-semibold text-center mb-2">Deine Aufgaben</h3>'; // Clear previous
+                const allTasks = document.querySelectorAll('#routine-tasks .task-item, #decision-tasks .task-item');
+                allTasks.forEach(task => {
+                    const clonedTask = task.cloneNode(true);
+                    clonedTask.draggable = true;
+                    clonedTask.classList.add('task-in-matrix');
+                    
+                    clonedTask.addEventListener('dragstart', (e) => {
+                        draggedItem = e.target.closest('.task-item');
+                         setTimeout(() => {
+                            if (draggedItem) draggedItem.style.opacity = '0.5';
+                        }, 0);
+                    });
+
+                    clonedTask.addEventListener('dragend', () => {
+                        setTimeout(() => {
+                            if (draggedItem) {
+                                draggedItem.style.opacity = '1';
+                                draggedItem = null;
+                            }
+                        }, 0);
+                    });
+                    
+                    matrixTaskList.appendChild(clonedTask);
+                });
+            };
+
+            // --- EVENT LISTENERS ---
+            prevBtn.addEventListener('click', () => {
+                if (currentStep > 1) {
+                    currentStep--;
+                    updateUI();
+                }
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    updateUI();
+                }
+            });
+            
+            finishBtn.addEventListener('click', () => {
+                alert('Workshop abgeschlossen! Tolle Arbeit!');
+            });
+
+            addTaskBtn.addEventListener('click', handleAddTask);
+            taskInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleAddTask();
+                }
+            });
+            
+            // Drag and Drop for Matrix
+            dropZones.forEach(zone => {
+                zone.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    zone.classList.add('drag-over');
+                });
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('drag-over');
+                });
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+                    if (draggedItem) {
+                        // Prevent dropping in the original list
+                        if(zone.id !== 'matrix-task-list') {
+                            const clonedNode = draggedItem.cloneNode(true);
+                            clonedNode.style.display = 'flex';
+                            clonedNode.style.opacity = '1';
+                            zone.appendChild(clonedNode);
+                            draggedItem.remove();
+                        } else {
+                           draggedItem.style.display = 'flex';
+                        }
+                    }
+                });
+            });
+
+            // --- INITIALIZATION ---
+            updateUI();
+        });
+    </script>
+</body>
+</html>
