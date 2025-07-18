@@ -8,6 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- jsPDF Libraries for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -23,6 +26,8 @@
         }
         .drop-zone {
             transition: background-color 0.2s, border-color 0.2s;
+            border: 2px dashed transparent;
+            min-height: 100px;
         }
         .drag-over {
             background-color: #e0f2fe; /* light blue */
@@ -36,6 +41,7 @@
         }
         .task-in-matrix {
             transform: scale(0.9);
+            width: 100%;
         }
     </style>
 </head>
@@ -105,18 +111,20 @@
                     <input type="text" id="task-input" class="flex-grow p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500" placeholder="z.B. Wöchentlichen Report erstellen">
                     <button id="add-task-btn" class="bg-sky-600 text-white font-bold py-3 px-5 rounded-lg hover:bg-sky-700 transition-colors">Hinzufügen</button>
                 </div>
-                <p class="mb-4 text-slate-600">Sortiere deine Aufgaben nun zu. Was ist Routine, was eine Entscheidung?</p>
-                <div class="grid md:grid-cols-2 gap-6 min-h-[300px]">
-                    <div id="routine-col" class="bg-slate-100 p-4 rounded-xl drop-zone">
-                        <h3 class="text-lg font-semibold text-center mb-4">ROUTINE (Autopilot)</h3>
+                <p class="mb-4 text-slate-600">Sortiere deine Aufgaben nun zu. Klicke die Buttons oder ziehe die Kärtchen in die passende Spalte.</p>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div id="routine-col" class="bg-blue-50/50 p-4 rounded-xl drop-zone border-2 border-dashed border-blue-300">
+                        <h3 class="text-lg font-semibold text-center mb-2 text-blue-800">Routine Aufgaben</h3>
+                        <p class="text-xs text-center text-slate-500 mb-4">(Der "Autopilot")</p>
                         <div id="routine-tasks" class="space-y-2"></div>
                     </div>
-                    <div id="decision-col" class="bg-slate-100 p-4 rounded-xl drop-zone">
-                        <h3 class="text-lg font-semibold text-center mb-4">ENTSCHEIDUNG (Navigator)</h3>
+                    <div id="decision-col" class="bg-purple-50/50 p-4 rounded-xl drop-zone border-2 border-dashed border-purple-300">
+                        <h3 class="text-lg font-semibold text-center mb-2 text-purple-800">Entscheidungs-Aufgaben</h3>
+                        <p class="text-xs text-center text-slate-500 mb-4">(Der "Navigator")</p>
                         <div id="decision-tasks" class="space-y-2"></div>
                     </div>
                 </div>
-                 <div id="task-pool" class="mt-4 p-4 border-2 border-dashed rounded-lg min-h-[100px]">
+                 <div id="task-pool" class="mt-4 p-4 border-2 border-dashed rounded-lg drop-zone">
                     <p class="text-sm text-center text-slate-500">Neue Aufgaben erscheinen hier. Ordne sie den Spalten zu.</p>
                 </div>
             </div>
@@ -126,29 +134,29 @@
                 <h2 class="text-2xl font-bold mb-2">Schritt 3: Die KI-Potenzial-Matrix</h2>
                 <p class="mb-4 text-slate-600">Priorisiere nun deine Aufgaben. Ziehe die Kärtchen per Drag & Drop in die Matrix. Wo liegt das größte Potenzial?</p>
                 <div class="flex flex-col lg:flex-row gap-6">
-                    <div id="matrix-task-list" class="lg:w-1/4 bg-slate-100 p-4 rounded-xl space-y-2">
+                    <div id="matrix-task-list" class="lg:w-1/4 bg-slate-100 p-4 rounded-xl space-y-2 drop-zone">
                          <h3 class="font-semibold text-center mb-2">Deine Aufgaben</h3>
                          <!-- Tasks will be populated here -->
                     </div>
-                    <div class="flex-1 grid grid-cols-2 grid-rows-2 gap-1 bg-slate-200 rounded-xl p-1 relative">
+                    <div id="matrix-container" class="flex-1 grid grid-cols-2 grid-rows-2 gap-1 bg-slate-200 rounded-xl p-1 relative">
                         <!-- Axis Labels -->
-                        <div class="absolute -bottom-8 left-0 right-0 text-center font-semibold text-slate-600">Zeitaufwand</div>
-                        <div class="absolute -left-24 top-0 bottom-0 flex items-center -rotate-90 font-semibold text-slate-600">Komplexität</div>
+                        <div class="absolute -bottom-8 left-0 right-0 text-center font-semibold text-slate-600">Zeitaufwand &rarr;</div>
+                        <div class="absolute -left-24 top-0 bottom-0 flex items-center -rotate-90 font-semibold text-slate-600">Komplexität &rarr;</div>
                         
                         <!-- Quadrants -->
-                        <div id="q1" class="drop-zone bg-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[200px] relative">
-                            <span class="absolute top-2 left-2 text-xs text-slate-400">Geringer Aufwand / Hohe Komplexität</span>
+                        <div id="q1" class="drop-zone bg-white rounded-lg p-2 flex flex-wrap gap-1 items-start justify-start relative">
+                            <span class="absolute top-2 left-2 text-xs text-slate-400 w-full">Geringer Aufwand / Hohe Komplexität</span>
                         </div>
-                        <div id="q2" class="drop-zone bg-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[200px] relative">
-                            <span class="absolute top-2 right-2 text-xs text-slate-400 font-bold">Navigator-Zone</span>
-                            <span class="absolute top-7 right-2 text-xs text-slate-400">Hoher Aufwand / Hohe Komplexität</span>
+                        <div id="q2" class="drop-zone bg-white rounded-lg p-2 flex flex-wrap gap-1 items-start justify-start relative">
+                            <span class="absolute top-2 right-2 text-xs text-slate-400 font-bold text-right w-full">Navigator-Zone</span>
+                            <span class="absolute top-7 right-2 text-xs text-slate-400 text-right w-full">Hoher Aufwand / Hohe Komplexität</span>
                         </div>
-                        <div id="q3" class="drop-zone bg-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[200px] relative">
-                            <span class="absolute bottom-2 left-2 text-xs text-slate-400">Geringer Aufwand / Geringe Komplexität</span>
+                        <div id="q3" class="drop-zone bg-white rounded-lg p-2 flex flex-wrap gap-1 items-start justify-start relative">
+                            <span class="absolute bottom-2 left-2 text-xs text-slate-400 w-full">Geringer Aufwand / Geringe Komplexität</span>
                         </div>
-                        <div id="q4" class="drop-zone bg-white rounded-lg p-2 flex flex-col items-center justify-center min-h-[200px] relative">
-                             <span class="absolute bottom-2 right-2 text-xs text-slate-400 font-bold">Autopilot-Zone</span>
-                             <span class="absolute bottom-7 right-2 text-xs text-slate-400">Hoher Aufwand / Geringe Komplexität</span>
+                        <div id="q4" class="drop-zone bg-white rounded-lg p-2 flex flex-wrap gap-1 items-start justify-start relative">
+                             <span class="absolute bottom-2 right-2 text-xs text-slate-400 font-bold text-right w-full">Autopilot-Zone</span>
+                             <span class="absolute bottom-7 right-2 text-xs text-slate-400 text-right w-full">Hoher Aufwand / Geringe Komplexität</span>
                         </div>
                     </div>
                 </div>
@@ -176,8 +184,8 @@
             
             <!-- Step 5: Abschluss -->
             <div id="step-5" class="step-content">
-                <h2 class="text-2xl font-bold mb-4">Schritt 5: Abschluss & Ernte</h2>
-                <p class="mb-6 text-slate-600">Super, du hast es fast geschafft! Nimm dir einen Moment, um die Ergebnisse zu reflektieren.</p>
+                <h2 class="text-2xl font-bold mb-4">Schritt 5: Abschluss</h2>
+                <p class="mb-6 text-slate-600">Super, du hast es fast geschafft! Halte deine finalen Gedanken fest und lade deine Ergebnisse als PDF herunter.</p>
                 <div class="bg-sky-50 border-l-4 border-sky-500 p-6 rounded-r-lg">
                     <h3 class="text-xl font-semibold mb-4">Deine Reflexion</h3>
                     <div class="space-y-4">
@@ -191,6 +199,11 @@
                         </div>
                     </div>
                 </div>
+                 <div class="mt-8 text-center">
+                    <button id="download-pdf-btn" class="bg-emerald-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-emerald-700 transition-colors">
+                        Ergebnisse als PDF herunterladen
+                    </button>
+                </div>
             </div>
 
         </main>
@@ -199,210 +212,350 @@
         <footer class="mt-8 flex justify-between items-center">
             <button id="prev-btn" class="bg-slate-300 text-slate-800 font-bold py-2 px-6 rounded-lg hover:bg-slate-400 transition-colors disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed">Zurück</button>
             <button id="next-btn" class="bg-sky-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-sky-700 transition-colors">Weiter</button>
-            <button id="finish-btn" class="bg-emerald-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-emerald-700 transition-colors hidden">Abschließen</button>
         </footer>
     </div>
 
     <script>
+        // Make sure jsPDF is available
+        const { jsPDF } = window.jspdf;
+
         document.addEventListener('DOMContentLoaded', () => {
             // --- STATE MANAGEMENT ---
             let currentStep = 1;
             const totalSteps = 5;
-            const tasks = [];
-            let draggedItem = null;
+            let draggedTaskId = null;
+
+            // Central state object to hold all user data
+            let workshopState = {
+                tasks: [], // { id, text, classification: 'pool' | 'routine' | 'decision', matrixPosition: null }
+                scenario: { heute: '', morgen: '', rolle: '' },
+                reflection: { erkenntnis: '', schritt: '' }
+            };
 
             // --- DOM ELEMENTS ---
             const stepContents = document.querySelectorAll('.step-content');
             const stepIndicators = document.querySelectorAll('.step-indicator');
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
-            const finishBtn = document.getElementById('finish-btn');
             const taskInput = document.getElementById('task-input');
             const addTaskBtn = document.getElementById('add-task-btn');
-            const taskPool = document.getElementById('task-pool');
-            const routineCol = document.getElementById('routine-col');
-            const decisionCol = document.getElementById('decision-col');
-            const matrixTaskList = document.getElementById('matrix-task-list');
             const dropZones = document.querySelectorAll('.drop-zone');
+            const downloadPdfBtn = document.getElementById('download-pdf-btn');
+            
+            // Text inputs for state saving
+            const szenarioHeute = document.getElementById('szenario-heute');
+            const szenarioMorgen = document.getElementById('szenario-morgen');
+            const szenarioRolle = document.getElementById('szenario-rolle');
+            const abschlussErkenntnis = document.getElementById('abschluss-erkenntnis');
+            const abschlussSchritt = document.getElementById('abschluss-schritt');
 
-
-            // --- FUNCTIONS ---
-            const updateUI = () => {
-                // Update Step Content
+            // --- NAVIGATION ---
+            
+            const navigateToStep = (stepNumber) => {
+                currentStep = stepNumber;
+                
+                // Show/hide step content
                 stepContents.forEach((step, index) => {
                     step.classList.toggle('active', (index + 1) === currentStep);
                 });
 
-                // Update Step Indicator
+                // Update step indicators
                 stepIndicators.forEach((indicator, index) => {
                     const circle = indicator.querySelector('div');
-                    const text = indicator.querySelector('span');
                     if (index < currentStep) {
-                        indicator.classList.remove('text-slate-400');
                         indicator.classList.add('text-sky-600');
-                        circle.classList.remove('bg-slate-300');
                         circle.classList.add('bg-sky-600', 'text-white');
                     } else {
                         indicator.classList.remove('text-sky-600');
-                        indicator.classList.add('text-slate-400');
                         circle.classList.remove('bg-sky-600', 'text-white');
-                        circle.classList.add('bg-slate-300');
                     }
                 });
 
-                // Update Navigation Buttons
+                // Update navigation buttons
                 prevBtn.disabled = currentStep === 1;
                 nextBtn.classList.toggle('hidden', currentStep === totalSteps);
-                finishBtn.classList.toggle('hidden', currentStep !== totalSteps);
-                
+
+                // ** CRITICAL: Populate content for the new step **
                 if (currentStep === 3) {
-                    populateMatrixTaskList();
+                    populateMatrixView();
                 }
             };
 
-            const createTaskElement = (task) => {
+            // --- DOM MANIPULATION ---
+
+            const populateStep2View = () => {
+                // Get container elements
+                const taskPool = document.getElementById('task-pool');
+                const routineTasksContainer = document.getElementById('routine-tasks');
+                const decisionTasksContainer = document.getElementById('decision-tasks');
+
+                // Clear existing content
+                taskPool.innerHTML = '<p class="text-sm text-center text-slate-500">Neue Aufgaben erscheinen hier. Ordne sie den Spalten zu.</p>';
+                routineTasksContainer.innerHTML = '';
+                decisionTasksContainer.innerHTML = '';
+                
+                // Re-populate based on state
+                workshopState.tasks.forEach(task => {
+                    const taskEl = createTaskElement(task, 'step2');
+                    if (task.classification === 'pool') taskPool.appendChild(taskEl);
+                    else if (task.classification === 'routine') routineTasksContainer.appendChild(taskEl);
+                    else if (task.classification === 'decision') decisionTasksContainer.appendChild(taskEl);
+                });
+            };
+
+            const populateMatrixView = () => {
+                const matrixTaskList = document.getElementById('matrix-task-list');
+                const matrixContainer = document.getElementById('matrix-container');
+
+                // Clear existing content
+                matrixTaskList.innerHTML = '<h3 class="font-semibold text-center mb-2">Deine Aufgaben</h3>';
+                matrixContainer.querySelectorAll('.drop-zone .task-item').forEach(item => item.remove());
+
+                // Re-populate based on state
+                workshopState.tasks.forEach(task => {
+                    if (task.classification !== 'pool') {
+                        const matrixTaskEl = createTaskElement(task, 'step3');
+                        if (task.matrixPosition) {
+                            const quadrant = document.getElementById(task.matrixPosition);
+                            if (quadrant) quadrant.appendChild(matrixTaskEl);
+                        } else {
+                            matrixTaskList.appendChild(matrixTaskEl);
+                        }
+                    }
+                });
+            };
+
+            const createTaskElement = (task, context) => {
                 const taskEl = document.createElement('div');
                 taskEl.id = `task-${task.id}`;
                 taskEl.className = 'task-item bg-white p-3 rounded-lg shadow border flex justify-between items-center';
                 taskEl.draggable = true;
-                taskEl.innerHTML = `
-                    <span class="flex-grow">${task.text}</span>
-                    <div class="task-buttons ml-2 space-x-1">
-                        <button data-action="routine" class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded hover:bg-blue-300">Routine</button>
-                        <button data-action="decision" class="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded hover:bg-purple-300">Entscheidung</button>
-                    </div>
-                `;
+
+                if (context === 'step2') {
+                    taskEl.innerHTML = `
+                        <span class="flex-grow">${task.text}</span>
+                        ${task.classification === 'pool' ? `
+                        <div class="task-buttons ml-2 space-x-1">
+                            <button data-action="routine" class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded hover:bg-blue-300">Routine</button>
+                            <button data-action="decision" class="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded hover:bg-purple-300">Entscheidung</button>
+                        </div>` : ''}
+                    `;
+                    taskEl.querySelector('.task-buttons')?.addEventListener('click', handleClassificationClick);
+                } else if (context === 'step3') {
+                    taskEl.classList.add('task-in-matrix');
+                    let classificationText = task.classification === 'routine' ? 'Routine' : 'Entscheidung';
+                    let classificationClass = task.classification === 'routine' ? 'bg-blue-200 text-blue-800' : 'bg-purple-200 text-purple-800';
+                    taskEl.innerHTML = `
+                        <span class="flex-grow">${task.text}</span>
+                        <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${classificationClass}">${classificationText}</span>
+                    `;
+                }
                 
                 taskEl.addEventListener('dragstart', (e) => {
-                    draggedItem = e.target.closest('.task-item');
-                    setTimeout(() => {
-                        draggedItem.style.display = 'none';
-                    }, 0);
+                    draggedTaskId = task.id;
+                    setTimeout(() => { e.target.style.opacity = '0.5'; }, 0);
                 });
-
-                taskEl.addEventListener('dragend', () => {
-                    setTimeout(() => {
-                        if (draggedItem) {
-                           draggedItem.style.display = 'flex';
-                           draggedItem = null;
-                        }
-                    }, 0);
+                taskEl.addEventListener('dragend', (e) => {
+                    draggedTaskId = null;
+                    e.target.style.opacity = '1';
                 });
-                
-                taskEl.querySelector('.task-buttons').addEventListener('click', (e) => {
-                    if(e.target.tagName === 'BUTTON') {
-                        const action = e.target.dataset.action;
-                        const taskDiv = e.target.closest('.task-item');
-                        if (action === 'routine') {
-                            routineCol.querySelector('#routine-tasks').appendChild(taskDiv);
-                        } else if (action === 'decision') {
-                            decisionCol.querySelector('#decision-tasks').appendChild(taskDiv);
-                        }
-                        taskDiv.querySelector('.task-buttons').remove();
-                    }
-                });
-
                 return taskEl;
             };
+            
+            // --- EVENT HANDLERS ---
             
             const handleAddTask = () => {
                 const taskText = taskInput.value.trim();
                 if (taskText) {
-                    const newTask = {
+                    workshopState.tasks.push({
                         id: Date.now(),
-                        text: taskText
-                    };
-                    tasks.push(newTask);
-                    const taskElement = createTaskElement(newTask);
-                    taskPool.appendChild(taskElement);
+                        text: taskText,
+                        classification: 'pool',
+                        matrixPosition: null
+                    });
                     taskInput.value = '';
                     taskInput.focus();
+                    populateStep2View();
                 }
             };
-            
-            const populateMatrixTaskList = () => {
-                matrixTaskList.innerHTML = '<h3 class="font-semibold text-center mb-2">Deine Aufgaben</h3>'; // Clear previous
-                const allTasks = document.querySelectorAll('#routine-tasks .task-item, #decision-tasks .task-item');
-                allTasks.forEach(task => {
-                    const clonedTask = task.cloneNode(true);
-                    clonedTask.draggable = true;
-                    clonedTask.classList.add('task-in-matrix');
-                    
-                    clonedTask.addEventListener('dragstart', (e) => {
-                        draggedItem = e.target.closest('.task-item');
-                         setTimeout(() => {
-                            if (draggedItem) draggedItem.style.opacity = '0.5';
-                        }, 0);
-                    });
 
-                    clonedTask.addEventListener('dragend', () => {
-                        setTimeout(() => {
-                            if (draggedItem) {
-                                draggedItem.style.opacity = '1';
-                                draggedItem = null;
-                            }
-                        }, 0);
-                    });
-                    
-                    matrixTaskList.appendChild(clonedTask);
-                });
+            const handleClassificationClick = (e) => {
+                if(e.target.tagName === 'BUTTON') {
+                    const action = e.target.dataset.action;
+                    const taskDiv = e.target.closest('.task-item');
+                    const taskId = parseInt(taskDiv.id.split('-').pop());
+                    const task = workshopState.tasks.find(t => t.id === taskId);
+                    if (task) {
+                        task.classification = action;
+                        populateStep2View();
+                    }
+                }
             };
 
-            // --- EVENT LISTENERS ---
+            const handleDrop = (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+                if (draggedTaskId === null) return;
+
+                const task = workshopState.tasks.find(t => t.id === draggedTaskId);
+                if (!task) return;
+
+                const dropZone = e.currentTarget;
+                const zoneId = dropZone.id;
+
+                if (dropZone.closest('#step-2')) {
+                    if (zoneId === 'routine-col') task.classification = 'routine';
+                    else if (zoneId === 'decision-col') task.classification = 'decision';
+                    else if (zoneId === 'task-pool') task.classification = 'pool';
+                    populateStep2View();
+                } else if (dropZone.closest('#step-3')) {
+                    task.matrixPosition = (zoneId === 'matrix-task-list') ? null : zoneId;
+                    populateMatrixView();
+                }
+            };
+
+            const generatePDF = () => {
+                const doc = new jsPDF();
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(22);
+                doc.text("Dein KI-Kompass: Zusammenfassung", 105, 20, null, null, 'center');
+                doc.setFontSize(12);
+                doc.setFont('helvetica', 'normal');
+                doc.text(`Workshop vom ${new Date().toLocaleDateString('de-DE')}`, 105, 28, null, null, 'center');
+
+                let yPos = 45;
+
+                // --- UPDATED PDF LAYOUT FOR PAGE 1 ---
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text("1. Deine Aufgaben & Einordnung", 14, yPos);
+                yPos += 10;
+
+                const routineTasks = workshopState.tasks
+                    .filter(t => t.classification === 'routine')
+                    .map(t => [t.text]);
+                
+                const decisionTasks = workshopState.tasks
+                    .filter(t => t.classification === 'decision')
+                    .map(t => [t.text]);
+
+                let leftTableFinalY = yPos;
+                if (routineTasks.length > 0) {
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Routine Aufgaben']],
+                        body: routineTasks,
+                        theme: 'striped',
+                        headStyles: { fillColor: [59, 130, 246] }, // Blue
+                        margin: { right: 105 }
+                    });
+                    leftTableFinalY = doc.autoTable.previous.finalY;
+                }
+
+                let rightTableFinalY = yPos;
+                if (decisionTasks.length > 0) {
+                    doc.autoTable({
+                        startY: yPos,
+                        head: [['Entscheidungs-Aufgaben']],
+                        body: decisionTasks,
+                        theme: 'striped',
+                        headStyles: { fillColor: [139, 92, 246] }, // Purple
+                        margin: { left: 105 }
+                    });
+                    rightTableFinalY = doc.autoTable.previous.finalY;
+                }
+                
+                yPos = Math.max(leftTableFinalY, rightTableFinalY) + 15;
+                // --- END OF UPDATED PDF LAYOUT ---
+
+                doc.addPage();
+                yPos = 20;
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text("2. Deine KI-Potenzial-Matrix", 14, yPos);
+                yPos += 10;
+                const getTasksForQuadrant = (q) => workshopState.tasks.filter(t => t.matrixPosition === q).map(t => `- ${t.text}`).join('\n');
+                const matrixData = [
+                    [{ content: 'Geringer Aufwand / Hohe Komplexität\n\n' + getTasksForQuadrant('q1'), styles: { minCellHeight: 60, valign: 'top' } }, { content: 'Navigator-Zone (Hoher Aufwand / Hohe Komplexität)\n\n' + getTasksForQuadrant('q2'), styles: { minCellHeight: 60, fontStyle: 'bold', valign: 'top' } }],
+                    [{ content: 'Geringer Aufwand / Geringe Komplexität\n\n' + getTasksForQuadrant('q3'), styles: { minCellHeight: 60, valign: 'top' } }, { content: 'Autopilot-Zone (Hoher Aufwand / Geringe Komplexität)\n\n' + getTasksForQuadrant('q4'), styles: { minCellHeight: 60, fontStyle: 'bold', valign: 'top' } }]
+                ];
+                doc.autoTable({ startY: yPos, body: matrixData, theme: 'grid' });
+
+                doc.addPage();
+                yPos = 20;
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text("3. Dein \"Vom Heute zum Morgen\"-Szenario", 14, yPos);
+                yPos += 10;
+                const addScenarioSection = (title, text) => {
+                    if (yPos > 250) { doc.addPage(); yPos = 20; }
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(title, 14, yPos);
+                    yPos += 6;
+                    doc.setFont('helvetica', 'normal');
+                    const splitText = doc.splitTextToSize(text || 'Keine Angabe', 180);
+                    doc.text(splitText, 14, yPos);
+                    yPos += (splitText.length * 5) + 10;
+                };
+                addScenarioSection("HEUTE: Wie erledigst du diese Aufgabe jetzt?", workshopState.scenario.heute);
+                addScenarioSection("MORGEN mit KI: Wie könnte die Aufgabe aussehen?", workshopState.scenario.morgen);
+                addScenarioSection("DEINE NEUE ROLLE: Was machst du dann?", workshopState.scenario.rolle);
+
+                if (yPos > 240) { doc.addPage(); yPos = 20; }
+                doc.setFontSize(16);
+                doc.setFont('helvetica', 'bold');
+                doc.text("4. Deine Abschluss-Reflexion", 14, yPos);
+                yPos += 10;
+                addScenarioSection("Größte Überraschung/wichtigste Erkenntnis:", workshopState.reflection.erkenntnis);
+                addScenarioSection("Ein kleiner, konkreter nächster Schritt:", workshopState.reflection.schritt);
+
+                doc.save('mein-ki-kompass.pdf');
+            };
+
+            // --- INITIALIZATION & EVENT LISTENERS ---
+            
             prevBtn.addEventListener('click', () => {
                 if (currentStep > 1) {
-                    currentStep--;
-                    updateUI();
+                    navigateToStep(currentStep - 1);
                 }
             });
 
             nextBtn.addEventListener('click', () => {
                 if (currentStep < totalSteps) {
-                    currentStep++;
-                    updateUI();
+                    navigateToStep(currentStep + 1);
                 }
             });
             
-            finishBtn.addEventListener('click', () => {
-                alert('Workshop abgeschlossen! Tolle Arbeit!');
-            });
-
             addTaskBtn.addEventListener('click', handleAddTask);
             taskInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    handleAddTask();
-                }
+                if (e.key === 'Enter') handleAddTask();
             });
+
+            // Save text inputs to state on change
+            szenarioHeute.addEventListener('input', (e) => workshopState.scenario.heute = e.target.value);
+            szenarioMorgen.addEventListener('input', (e) => workshopState.scenario.morgen = e.target.value);
+            szenarioRolle.addEventListener('input', (e) => workshopState.scenario.rolle = e.target.value);
+            abschlussErkenntnis.addEventListener('input', (e) => workshopState.reflection.erkenntnis = e.target.value);
+            abschlussSchritt.addEventListener('input', (e) => workshopState.reflection.schritt = e.target.value);
             
-            // Drag and Drop for Matrix
+            downloadPdfBtn.addEventListener('click', generatePDF);
+            
+            // Add dragover and drop listeners to all drop zones
             dropZones.forEach(zone => {
-                zone.addEventListener('dragover', e => {
+                zone.addEventListener('dragover', (e) => {
                     e.preventDefault();
                     zone.classList.add('drag-over');
                 });
-                zone.addEventListener('dragleave', () => {
-                    zone.classList.remove('drag-over');
-                });
-                zone.addEventListener('drop', e => {
+                zone.addEventListener('dragleave', (e) => {
                     e.preventDefault();
                     zone.classList.remove('drag-over');
-                    if (draggedItem) {
-                        // Prevent dropping in the original list
-                        if(zone.id !== 'matrix-task-list') {
-                            const clonedNode = draggedItem.cloneNode(true);
-                            clonedNode.style.display = 'flex';
-                            clonedNode.style.opacity = '1';
-                            zone.appendChild(clonedNode);
-                            draggedItem.remove();
-                        } else {
-                           draggedItem.style.display = 'flex';
-                        }
-                    }
                 });
+                zone.addEventListener('drop', handleDrop);
             });
 
-            // --- INITIALIZATION ---
-            updateUI();
+            // Initial render
+            navigateToStep(1);
         });
     </script>
 </body>
