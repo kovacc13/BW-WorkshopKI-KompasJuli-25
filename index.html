@@ -259,16 +259,17 @@
                     step.classList.toggle('active', (index + 1) === currentStep);
                 });
 
-                // Update step indicators
+                // --- UPDATED STEP INDICATOR LOGIC ---
                 stepIndicators.forEach((indicator, index) => {
                     const circle = indicator.querySelector('div');
-                    if (index < currentStep) {
-                        indicator.classList.add('text-sky-600');
-                        circle.classList.add('bg-sky-600', 'text-white');
-                    } else {
-                        indicator.classList.remove('text-sky-600');
-                        circle.classList.remove('bg-sky-600', 'text-white');
-                    }
+                    const isCurrent = (index + 1) === currentStep;
+                    
+                    indicator.classList.toggle('text-sky-600', isCurrent);
+                    indicator.classList.toggle('text-slate-400', !isCurrent);
+                    
+                    circle.classList.toggle('bg-sky-600', isCurrent);
+                    circle.classList.toggle('text-white', isCurrent);
+                    circle.classList.toggle('bg-slate-300', !isCurrent);
                 });
 
                 // Update navigation buttons
@@ -414,30 +415,54 @@
                 }
             };
 
+            // --- PDF GENERATION (UPDATED) ---
             const generatePDF = () => {
                 const doc = new jsPDF();
+                let yPos = 20;
+
+                // Helper for consistent section titles
+                const addSectionTitle = (title) => {
+                    if (yPos > 260) { doc.addPage(); yPos = 20; }
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(16);
+                    doc.text(title, 14, yPos);
+                    yPos += 10;
+                };
+                
+                // Helper for wrapped text blocks
+                const addWrappedText = (text, options = {}) => {
+                    const { isBold = false, indent = 0 } = options;
+                    doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+                    doc.setFontSize(12);
+                    const splitText = doc.splitTextToSize(text || 'Keine Angabe', 180 - indent);
+                    doc.text(splitText, 14 + indent, yPos);
+                    yPos += (splitText.length * 5) + 6;
+                };
+
+                // --- PAGE 1: TITLE & STEP 1 ---
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(22);
-                doc.text("Dein KI-Kompass: Zusammenfassung", 105, 20, null, null, 'center');
+                doc.text("Dein KI-Kompass: Zusammenfassung", 105, yPos, null, null, 'center');
+                yPos += 8;
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'normal');
-                doc.text(`Workshop vom ${new Date().toLocaleDateString('de-DE')}`, 105, 28, null, null, 'center');
-
-                let yPos = 45;
-
-                // --- UPDATED PDF LAYOUT FOR PAGE 1 ---
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text("1. Deine Aufgaben & Einordnung", 14, yPos);
-                yPos += 10;
-
-                const routineTasks = workshopState.tasks
-                    .filter(t => t.classification === 'routine')
-                    .map(t => [t.text]);
+                doc.text(`Workshop vom ${new Date().toLocaleDateString('de-DE')}`, 105, yPos, null, null, 'center');
+                yPos += 15;
                 
-                const decisionTasks = workshopState.tasks
-                    .filter(t => t.classification === 'decision')
-                    .map(t => [t.text]);
+                addSectionTitle("Schritt 1: Die zwei Rollen der KI");
+                addWrappedText("KI als \"Autopilot\" (Routine):", { isBold: true });
+                addWrappedText("Die KI übernimmt eine Aufgabe vollständig und führt sie selbstständig aus. Das Ziel ist, Effizienz zu steigern und Zeit zu sparen.", { indent: 5 });
+                yPos += 5;
+                addWrappedText("KI als \"Navigator\" (Entscheidungshilfe):", { isBold: true });
+                addWrappedText("Die KI analysiert Daten, zeigt Muster und macht Vorschläge, um bessere, datengestützte Entscheidungen zu ermöglichen.", { indent: 5 });
+
+                // --- PAGE 2: STEP 2 ---
+                doc.addPage();
+                yPos = 20;
+                addSectionTitle("Schritt 2: Deine Aufgaben & Einordnung");
+                
+                const routineTasks = workshopState.tasks.filter(t => t.classification === 'routine').map(t => [t.text]);
+                const decisionTasks = workshopState.tasks.filter(t => t.classification === 'decision').map(t => [t.text]);
 
                 let leftTableFinalY = yPos;
                 if (routineTasks.length > 0) {
@@ -466,14 +491,11 @@
                 }
                 
                 yPos = Math.max(leftTableFinalY, rightTableFinalY) + 15;
-                // --- END OF UPDATED PDF LAYOUT ---
 
+                // --- PAGE 3: STEP 3 ---
                 doc.addPage();
                 yPos = 20;
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text("2. Deine KI-Potenzial-Matrix", 14, yPos);
-                yPos += 10;
+                addSectionTitle("Schritt 3: Deine KI-Potenzial-Matrix");
                 const getTasksForQuadrant = (q) => workshopState.tasks.filter(t => t.matrixPosition === q).map(t => `- ${t.text}`).join('\n');
                 const matrixData = [
                     [{ content: 'Geringer Aufwand / Hohe Komplexität\n\n' + getTasksForQuadrant('q1'), styles: { minCellHeight: 60, valign: 'top' } }, { content: 'Navigator-Zone (Hoher Aufwand / Hohe Komplexität)\n\n' + getTasksForQuadrant('q2'), styles: { minCellHeight: 60, fontStyle: 'bold', valign: 'top' } }],
@@ -481,34 +503,25 @@
                 ];
                 doc.autoTable({ startY: yPos, body: matrixData, theme: 'grid' });
 
+                // --- PAGE 4: STEP 4 ---
                 doc.addPage();
                 yPos = 20;
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text("3. Dein \"Vom Heute zum Morgen\"-Szenario", 14, yPos);
-                yPos += 10;
-                const addScenarioSection = (title, text) => {
-                    if (yPos > 250) { doc.addPage(); yPos = 20; }
-                    doc.setFontSize(12);
-                    doc.setFont('helvetica', 'bold');
-                    doc.text(title, 14, yPos);
-                    yPos += 6;
-                    doc.setFont('helvetica', 'normal');
-                    const splitText = doc.splitTextToSize(text || 'Keine Angabe', 180);
-                    doc.text(splitText, 14, yPos);
-                    yPos += (splitText.length * 5) + 10;
-                };
-                addScenarioSection("HEUTE: Wie erledigst du diese Aufgabe jetzt?", workshopState.scenario.heute);
-                addScenarioSection("MORGEN mit KI: Wie könnte die Aufgabe aussehen?", workshopState.scenario.morgen);
-                addScenarioSection("DEINE NEUE ROLLE: Was machst du dann?", workshopState.scenario.rolle);
+                addSectionTitle("Schritt 4: Dein \"Vom Heute zum Morgen\"-Szenario");
+                addWrappedText("HEUTE: Wie erledigst du diese Aufgabe jetzt?", { isBold: true });
+                addWrappedText(workshopState.scenario.heute);
+                addWrappedText("MORGEN mit KI: Wie könnte die Aufgabe aussehen?", { isBold: true });
+                addWrappedText(workshopState.scenario.morgen);
+                addWrappedText("DEINE NEUE ROLLE: Was machst du dann?", { isBold: true });
+                addWrappedText(workshopState.scenario.rolle);
 
-                if (yPos > 240) { doc.addPage(); yPos = 20; }
-                doc.setFontSize(16);
-                doc.setFont('helvetica', 'bold');
-                doc.text("4. Deine Abschluss-Reflexion", 14, yPos);
-                yPos += 10;
-                addScenarioSection("Größte Überraschung/wichtigste Erkenntnis:", workshopState.reflection.erkenntnis);
-                addScenarioSection("Ein kleiner, konkreter nächster Schritt:", workshopState.reflection.schritt);
+                // --- PAGE 5: STEP 5 ---
+                doc.addPage();
+                yPos = 20;
+                addSectionTitle("Schritt 5: Abschluss & Nächste Schritte");
+                addWrappedText("Größte Überraschung/wichtigste Erkenntnis:", { isBold: true });
+                addWrappedText(workshopState.reflection.erkenntnis);
+                addWrappedText("Ein kleiner, konkreter nächster Schritt:", { isBold: true });
+                addWrappedText(workshopState.reflection.schritt);
 
                 doc.save('mein-ki-kompass.pdf');
             };
